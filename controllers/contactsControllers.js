@@ -2,6 +2,10 @@ import { isValidObjectId } from "mongoose";
 import Contact from "../models/contacts.js";
 import HttpError from "../helpers/HttpError.js";
 
+const validateObjectId = (id) => {
+  if (!isValidObjectId(id)) throw HttpError(400, `${id} is not a valid id`);
+};
+
 export const getAllContacts = async (req, res, next) => {
   try {
     const contacts = await Contact.find();
@@ -14,8 +18,8 @@ export const getAllContacts = async (req, res, next) => {
 export const getOneContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    if (!isValidObjectId(contactId))
-      throw HttpError(400, `${contactId} is not valid id`);
+    validateObjectId(contactId);
+
     const contact = await Contact.findById(contactId);
     if (!contact) throw HttpError(404);
     res.send(contact);
@@ -25,11 +29,13 @@ export const getOneContact = async (req, res, next) => {
 };
 
 export const deleteContact = async (req, res, next) => {
-  const { contactId } = req.params;
   try {
+    const { contactId } = req.params;
+    validateObjectId(contactId);
     const removeContact = await Contact.findByIdAndDelete(contactId);
     if (!removeContact) throw HttpError(404);
-    res.status(204).end();
+    res.send(removeContact);
+    res.status(204).send(removeContact);
   } catch (error) {
     next(error);
   }
@@ -53,7 +59,13 @@ export const createContact = async (req, res, next) => {
 export const updateContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-
+    const updateData = req.body;
+    if (Object.keys(updateData).length === 0) {
+      return res
+        .status(400)
+        .send({ message: "Body must have at least one field" });
+    }
+    validateObjectId(contactId);
     const result = await Contact.findByIdAndUpdate(contactId, req.body, {
       new: true,
     });
