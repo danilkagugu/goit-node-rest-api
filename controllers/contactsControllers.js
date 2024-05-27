@@ -8,7 +8,7 @@ const validateObjectId = (id) => {
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await Contact.find();
+    const contacts = await Contact.find({ owner: req.user.id });
     res.status(200).send(contacts);
   } catch (error) {
     next(error);
@@ -20,7 +20,10 @@ export const getOneContact = async (req, res, next) => {
     const { contactId } = req.params;
     validateObjectId(contactId);
 
-    const contact = await Contact.findById(contactId);
+    const contact = await Contact.findOne({
+      _id: contactId,
+      owner: req.user.id,
+    });
     if (!contact) throw HttpError(404);
     res.send(contact);
   } catch (error) {
@@ -32,7 +35,10 @@ export const deleteContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
     validateObjectId(contactId);
-    const removeContact = await Contact.findByIdAndDelete(contactId);
+    const removeContact = await Contact.findOneAndDelete({
+      _id: contactId,
+      owner: req.user.id,
+    });
     if (!removeContact) throw HttpError(404);
     res.send(removeContact);
     res.status(204).send(removeContact);
@@ -47,6 +53,7 @@ export const createContact = async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
+      owner: req.user.id,
     };
     const addContact = await Contact.create(contact);
 
@@ -66,9 +73,13 @@ export const updateContact = async (req, res, next) => {
         .send({ message: "Body must have at least one field" });
     }
     validateObjectId(contactId);
-    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
-      new: true,
-    });
+    const result = await Contact.findOneAndUpdate(
+      { _id: contactId, owner: req.user.id },
+      req.body,
+      {
+        new: true,
+      }
+    );
     if (!result) throw HttpError(404);
     res.send(result);
   } catch (error) {
