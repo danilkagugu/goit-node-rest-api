@@ -29,7 +29,9 @@ const auth = (req, res, next) => {
         subscription: decoded.subscription,
       };
       next();
-    } catch (error) {}
+    } catch (error) {
+      next(error);
+    }
   });
 };
 export default auth;
