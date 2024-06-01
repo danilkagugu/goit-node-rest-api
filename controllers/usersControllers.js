@@ -1,16 +1,25 @@
 import User from "../models/users.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import * as fs from "node:fs/promises";
+import path from "node:path";
+import Jimp from "jimp";
+import gravatar from "gravatar";
 
 export const createUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const avatarUrl = gravatar.url(email, { protocol: "http", format: "png" });
     const user = await User.findOne({ email });
     if (user !== null) {
       return res.status(409).send({ message: "Email in use" });
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const addUser = await User.create({ email, password: passwordHash });
+    const addUser = await User.create({
+      email,
+      password: passwordHash,
+      avatarURL: avatarUrl,
+    });
 
     res.status(201).send({
       user: {
@@ -66,5 +75,26 @@ export const currentUser = (req, res, next) => {
       .send({ email: req.user.email, subscription: req.user.subscription });
   } catch (error) {
     next(error);
+  }
+};
+
+export const changeAvatar = async (req, res, next) => {
+  try {
+    const avatarSize = await Jimp.read(req.file.path);
+    await avatarSize.resize(256, 256).writeAsync(req.file.path);
+    await fs.rename(
+      req.file.path,
+      path.resolve("public", "avatars", req.file.filename)
+    );
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        avatarURL: req.file.filename,
+      },
+      { new: true }
+    );
+    res.status(201).send({ avatarURL: user.avatarURL });
+  } catch (error) {
+    nexr(error);
   }
 };
