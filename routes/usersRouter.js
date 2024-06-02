@@ -21,7 +21,7 @@ usersRouter.post("/login", validateBody(loginUserSchema), loginUser);
 usersRouter.post("/logout", authMiddleware, logoutUser);
 usersRouter.get("/current", authMiddleware, currentUser);
 usersRouter.patch(
-  "/avatar",
+  "/avatars",
   uploadMiddlewares.single("avatar"),
   authMiddleware,
   changeAvatar
