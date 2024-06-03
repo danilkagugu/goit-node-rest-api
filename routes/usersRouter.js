@@ -22,8 +22,9 @@ usersRouter.post("/logout", authMiddleware, logoutUser);
 usersRouter.get("/current", authMiddleware, currentUser);
 usersRouter.patch(
   "/avatars",
-  uploadMiddlewares.single("avatar"),
   authMiddleware,
+  uploadMiddlewares.single("avatar"),
+
   changeAvatar
 );
 

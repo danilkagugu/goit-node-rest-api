@@ -5,6 +5,7 @@ import * as fs from "node:fs/promises";
 import path from "node:path";
 import Jimp from "jimp";
 import gravatar from "gravatar";
+import HttpError from "../helpers/HttpError.js";
 
 export const createUser = async (req, res, next) => {
   try {
@@ -80,7 +81,9 @@ export const currentUser = (req, res, next) => {
 
 export const changeAvatar = async (req, res, next) => {
   try {
+    if (!req.file) throw HttpError(400);
     const avatarSize = await Jimp.read(req.file.path);
+
     await avatarSize.resize(256, 256).writeAsync(req.file.path);
     await fs.rename(
       req.file.path,
@@ -89,12 +92,12 @@ export const changeAvatar = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(
       req.user.id,
       {
-        avatarURL: req.file.filename,
+        avatarURL: `/avatars/${req.file.filename}`,
       },
       { new: true }
     );
     res.status(201).send({ avatarURL: user.avatarURL });
   } catch (error) {
-    nexr(error);
+    next(error);
   }
 };
