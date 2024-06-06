@@ -6,11 +6,14 @@ import {
   logoutUser,
   currentUser,
   changeAvatar,
+  verifyEmail,
+  repeatVerifyEmail,
 } from "../controllers/usersControllers.js";
 import validateBody from "../helpers/validateBody.js";
 import {
   loginUserSchema,
   registerUsersSchema,
+  repeatVerifyEmailSchema,
 } from "../schemas/usersSchemas.js";
 import uploadMiddlewares from "../middlewares/upload.js";
 
@@ -24,8 +27,13 @@ usersRouter.patch(
   "/avatars",
   authMiddleware,
   uploadMiddlewares.single("avatar"),
-
   changeAvatar
+);
+usersRouter.get("/auth/verify/:verificationToken", verifyEmail);
+usersRouter.post(
+  "/verify",
+  validateBody(repeatVerifyEmailSchema),
+  repeatVerifyEmail
 );
 
 export default usersRouter;
